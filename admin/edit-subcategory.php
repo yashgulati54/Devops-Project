@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 include('include/config.php');
@@ -6,20 +7,19 @@ if(strlen($_SESSION['alogin'])==0)
 header('location:index.php');
 }
 else{
-date_default_timezone_set('Asia/Kolkata');// change according timezone
+date_default_timezone_set('Asia/Kolkata');
 $currentTime = date( 'd-m-Y h:i:s A', time () );
 
 
 if(isset($_POST['submit']))
 {
 	$category=$_POST['category'];
-	$description=$_POST['description'];
+	$subcat=$_POST['subcategory'];
 	$id=intval($_GET['id']);
-$sql=mysqli_query($bd, "update category set categoryName='$category',categoryDescription='$description',updationDate='$currentTime' where id='$id'");
+$sql=mysqli_query($bd, "update subcategory set categoryid='$category',subcategory='$subcat',updationDate='$currentTime' where id='$id'");
 $_SESSION['msg']="Category Updated !!";
 
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -27,7 +27,7 @@ $_SESSION['msg']="Category Updated !!";
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Admin| Category</title>
+	<title>Admin| Edit SubCategory</title>
 	<link type="text/css" href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link type="text/css" href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
 	<link type="text/css" href="css/theme.css" rel="stylesheet">
@@ -46,7 +46,7 @@ $_SESSION['msg']="Category Updated !!";
 
 						<div class="module">
 							<div class="module-head">
-								<h3>Category</h3>
+								<h3>Edit SubCategory</h3>
 							</div>
 							<div class="module-body">
 
@@ -64,24 +64,43 @@ $_SESSION['msg']="Category Updated !!";
 			<form class="form-horizontal row-fluid" name="Category" method="post" >
 <?php
 $id=intval($_GET['id']);
-$query=mysqli_query($bd, "select * from category where id='$id'");
+$query=mysqli_query($bd, "select category.id,category.categoryName,subcategory.subcategory from subcategory join category on category.id=subcategory.categoryid where subcategory.id='$id'");
 while($row=mysqli_fetch_array($query))
 {
-?>									
+?>		
+
 <div class="control-group">
-<label class="control-label" for="basicinput">Category Name</label>
+<label class="control-label" for="basicinput">Category</label>
 <div class="controls">
-<input type="text" placeholder="Enter category Name"  name="category" value="<?php echo  htmlentities($row['categoryName']);?>" class="span8 tip" required>
+<select name="category" class="span8 tip" required>
+<option value="<?php echo htmlentities($row['id']);?>"><?php echo htmlentities($catname=$row['categoryName']);?></option>
+<?php $ret=mysqli_query($bd, "select * from category");
+while($result=mysqli_fetch_array($ret))
+{
+	$cat=$result['categoryName'];
+if($catname=$cat)
+{
+	continue;
+}
+else{
+?>
+<option value="<?php echo $result['id'];?>"><?php echo $result['categoryName'];?></option>
+<?php } }?>
+</select>
 </div>
 </div>
+
+
 
 
 <div class="control-group">
-											<label class="control-label" for="basicinput">Description</label>
-											<div class="controls">
-												<textarea class="span8" name="description" rows="5"><?php echo  htmlentities($row['categoryDescription']);?></textarea>
-											</div>
-										</div>
+<label class="control-label" for="basicinput">SubCategory Name</label>
+<div class="controls">
+<input type="text" placeholder="Enter category Name"  name="subcategory" value="<?php echo  htmlentities($row['subcategory']);?>" class="span8 tip" required>
+</div>
+</div>
+
+
 									<?php } ?>	
 
 	<div class="control-group">

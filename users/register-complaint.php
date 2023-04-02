@@ -7,27 +7,30 @@ if(strlen($_SESSION['login'])==0)
 header('location:index.php');
 }
 else{
-date_default_timezone_set('Asia/Kolkata');
-$currentTime = date( 'd-m-Y h:i:s A', time () );
-
 
 if(isset($_POST['submit']))
 {
-$fname=$_POST['fullname'];
-$contactno=$_POST['contactno'];
-$address=$_POST['address'];
+$uid=$_SESSION['id'];
+$category=$_POST['category'];
+$subcat=$_POST['subcategory'];
+$complaintype=$_POST['complaintype'];
 $state=$_POST['state'];
-$country=$_POST['country'];
-$pincode=$_POST['pincode'];
-$query=mysqli_query($bd, "update users set fullName='$fname',contactNo='$contactno',address='$address',State='$state',country='$country',pincode='$pincode' where userEmail='".$_SESSION['login']."'");
-if($query)
+$noc=$_POST['noc'];
+$complaintdetials=$_POST['complaindetails'];
+$compfile=$_FILES["compfile"]["name"];
+
+
+
+move_uploaded_file($_FILES["compfile"]["tmp_name"],"complaintdocs/".$_FILES["compfile"]["name"]);
+$query=mysqli_query($bd, "insert into tblcomplaints(userId,category,subcategory,complaintType,state,noc,complaintDetails,complaintFile) values('$uid','$category','$subcat','$complaintype','$state','$noc','$complaintdetials','$compfile')");
+
+$sql=mysqli_query($bd, "select complaintNumber from tblcomplaints  order by complaintNumber desc limit 1");
+while($row=mysqli_fetch_array($sql))
 {
-$successmsg="Profile Successfully !!";
+ $cmpn=$row['complaintNumber'];
 }
-else
-{
-$errormsg="Profile not updated !!";
-}
+$complainno=$cmpn;
+echo '<script> alert("Your complain has been successfully filled and your complaintno is  "+"'.$complainno.'")</script>';
 }
 ?>
 
@@ -41,7 +44,7 @@ $errormsg="Profile not updated !!";
     <meta name="author" content="Dashboard">
     <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
 
-    <title>CMS | User Change Password</title>
+    <title>CMS | User Register Complaint</title>
 
     <!-- Bootstrap core CSS -->
     <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -51,6 +54,21 @@ $errormsg="Profile not updated !!";
     <link rel="stylesheet" type="text/css" href="assets/js/bootstrap-daterangepicker/daterangepicker.css" />
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/style-responsive.css" rel="stylesheet">
+    <script>
+function getCat(val) {
+  //alert('val');
+
+  $.ajax({
+  type: "POST",
+  url: "getsubcat.php",
+  data:'catid='+val,
+  success: function(data){
+    $("#subcategory").html(data);
+    
+  }
+  });
+  }
+  </script>
   
   </head>
 
@@ -61,7 +79,7 @@ $errormsg="Profile not updated !!";
       <?php include("includes/sidebar.php");?>
       <section id="main-content">
           <section class="wrapper">
-          	<h3><i class="fa fa-angle-right"></i> Profile info</h3>
+          	<h3><i class="fa fa-angle-right"></i> Register Complaint</h3>
           	
           	<!-- BASIC FORM ELELEMNTS -->
           	<div class="row mt">
@@ -82,79 +100,82 @@ $errormsg="Profile not updated !!";
  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                       <b>Oh snap!</b> </b> <?php echo htmlentities($errormsg);?></div>
                       <?php }?>
- <?php $query=mysqli_query($bd, "select * from users where userEmail='".$_SESSION['login']."'");
- while($row=mysqli_fetch_array($query)) 
- {
- ?>                     
 
-  <h4 class="mb"><i class="fa fa-user"></i>&nbsp;&nbsp;<?php echo htmlentities($row['fullName']);?>'s Profile</h4>
-    <h5><b>Last Updated at :</b>&nbsp;&nbsp;<?php echo htmlentities($row['updationDate']);?></h5>
-                      <form class="form-horizontal style-form" method="post" name="profile" >
+                      <form class="form-horizontal style-form" method="post" name="complaint" enctype="multipart/form-data" >
 
 <div class="form-group">
-<label class="col-sm-2 col-sm-2 control-label">Full Name</label>
+<label class="col-sm-2 col-sm-2 control-label">Category</label>
 <div class="col-sm-4">
-<input type="text" name="fullname" required="required" value="<?php echo htmlentities($row['fullName']);?>" class="form-control" >
+<select name="category" id="category" class="form-control" onChange="getCat(this.value);" required="">
+<option value="">Select Category</option>
+<?php $sql=mysqli_query($bd, "select id,categoryName from category ");
+while ($rw=mysqli_fetch_array($sql)) {
+  ?>
+  <option value="<?php echo htmlentities($rw['id']);?>"><?php echo htmlentities($rw['categoryName']);?></option>
+<?php
+}
+?>
+</select>
  </div>
-<label class="col-sm-2 col-sm-2 control-label">User Email </label>
+<label class="col-sm-2 col-sm-2 control-label">Sub Category </label>
  <div class="col-sm-4">
-<input type="email" name="useremail" required="required" value="<?php echo htmlentities($row['userEmail']);?>" class="form-control" readonly>
+<select name="subcategory" id="subcategory" class="form-control" >
+<option value="">Select Subcategory</option>
+</select>
 </div>
  </div>
+
+
 
 
 <div class="form-group">
-<label class="col-sm-2 col-sm-2 control-label">Contact</label>
- <div class="col-sm-4">
-<input type="text" name="contactno" required="required" value="<?php echo htmlentities($row['contactNo']);?>" class="form-control">
-</div>
-<label class="col-sm-2 col-sm-2 control-label">Address </label>
+<label class="col-sm-2 col-sm-2 control-label">Complaint Type</label>
 <div class="col-sm-4">
-<textarea  name="address" required="required" class="form-control"><?php echo htmlentities($row['address']);?></textarea>
-</div>
+<select name="complaintype" class="form-control" required="">
+                <option value=" Complaint"> Complaint</option>
+                  <option value="General Query">General Query</option>
+                </select> 
 </div>
 
-<div class="form-group">
 <label class="col-sm-2 col-sm-2 control-label">State</label>
 <div class="col-sm-4">
 <select name="state" required="required" class="form-control">
-<option value="<?php echo htmlentities($row['State']);?>"><?php echo htmlentities($st=$row['State']);?></option>
+<option value="">Select State</option>
 <?php $sql=mysqli_query($bd, "select stateName from state ");
 while ($rw=mysqli_fetch_array($sql)) {
-  if($rw['stateName']==$st)
-  {
-    continue;
-  }
-  else
-  {
   ?>
   <option value="<?php echo htmlentities($rw['stateName']);?>"><?php echo htmlentities($rw['stateName']);?></option>
 <?php
-}}
+}
 ?>
 
 </select>
 </div>
-<label class="col-sm-2 col-sm-2 control-label">Country </label>
-<div class="col-sm-4">
-<input type="text" name="country" required="required" value="<?php echo htmlentities($row['country']);?>" class="form-control">
-</div>
 </div>
 
 
 <div class="form-group">
-<label class="col-sm-2 col-sm-2 control-label">Pincode</label>
+<label class="col-sm-2 col-sm-2 control-label">Nature of Complaint</label>
 <div class="col-sm-4">
-<input type="text" name="pincode" maxlength="6" required="required" value="<?php echo htmlentities($row['pincode']);?>" class="form-control">
+<input type="text" name="noc" required="required" value="" required="" class="form-control">
 </div>
-<label class="col-sm-2 col-sm-2 control-label">Reg Date </label>
-<div class="col-sm-4">
-<input type="text" name="regdate" required="required" value="<?php echo htmlentities($row['regDate']);?>" class="form-control" readonly>
- </div>
+
+</div>
+
+<div class="form-group">
+<label class="col-sm-2 col-sm-2 control-label">Complaint Details (max 2000 words) </label>
+<div class="col-sm-6">
+<textarea  name="complaindetails" required="required" cols="10" rows="10" class="form-control" maxlength="2000"></textarea>
+</div>
+</div>
+<div class="form-group">
+<label class="col-sm-2 col-sm-2 control-label">Complaint Related Doc(if any) </label>
+<div class="col-sm-6">
+<input type="file" name="compfile" class="form-control" value="">
+</div>
 </div>
 
 
-<?php } ?>
 
                           <div class="form-group">
                            <div class="col-sm-10" style="padding-left:25% ">
